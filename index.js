@@ -70,12 +70,11 @@ bot.on('text', async (ctx) => {
     await guardarConversacion('holding', 'jarvis', `Resumen: ${r}`);
     return ctx.reply(r);
   }
-  if (t === 'Santa Fe') { e.emp = 'santafe'; e.hist = []; return ctx.reply('CEO Capital Sports Santa Fe en linea.\n\nPuedes enviarme los archivos del dia o consultarme sobre administracion, personal, compras o finanzas.'); }
-  if (t === 'Eurobuilding') { e.emp = 'eurobuilding'; e.hist = []; return ctx.reply('CEO Capital Sports Eurobuilding en linea.\n\nPuedes enviarme los archivos del dia o consultarme sobre administracion.'); }
-  if (t === 'VPT') { e.emp = 'vpt'; e.hist = []; return ctx.reply('CEO Venezuela Padel Tour en linea.\n\nEn que le puedo ayudar?'); }
-  if (t === 'Agencia 58') { e.emp = 'agencia58'; e.hist = []; return ctx.reply('CEO Agencia 58 en linea.\n\nPuedo cotizar viajes, generar ideas de contenido o ayudarle con la estrategia de crecimiento.'); }
-  if (t === 'Cambionet') { e.emp = 'cambionet'; e.hist = []; return ctx.reply('CEO Cambionet en linea.\n\nEn que le puedo ayudar con las finanzas?'); }
-  if (!e.emp) return ctx.reply('Con quien quieres hablar?', teclado);
+if (t === 'Santa Fe') { e.emp = 'santafe'; e.hist = []; return ctx.reply('CEO Capital Sports Santa Fe en linea.\n\nPuedes enviarme los archivos del dia o consultarme sobre administracion, personal, compras o finanzas.'); }
+if (t === 'Eurobuilding') { e.emp = 'eurobuilding'; e.hist = []; return ctx.reply('CEO Capital Sports Eurobuilding en linea.\n\nPuedes enviarme los archivos del dia o consultarme sobre administracion.'); }
+if (t === 'VPT') { e.emp = 'vpt'; e.hist = []; return ctx.reply('CEO Venezuela Padel Tour en linea.\n\nEn que le puedo ayudar?'); }
+if (t === 'Agencia 58') { e.emp = 'agencia58'; e.hist = []; return ctx.reply('CEO Agencia 58 en linea.\n\nPuedo cotizar viajes, generar ideas de contenido o ayudarle con la estrategia de crecimiento.'); }
+if (t === 'Cambionet') { e.emp = 'cambionet'; e.hist = []; return ctx.reply('CEO Cambionet en linea.\n\nEn que le puedo ayudar con las finanzas?'); }
   await ctx.sendChatAction('typing');
   const sys = e.emp === 'jarvis' ? JARVIS : EMPRESAS[e.emp];
   const r = await preguntar(sys, e.hist, t);
