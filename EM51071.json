@@ -1,0 +1,44 @@
+{"COD":"EM51071", "Nombre":"Total Nacional. Total. Flujo de inmigraciones procedentes del extranjero. Todas las edades. Total. Española. Total. ", "FK_Unidad":155, "FK_Escala":1, "Data":[{"Fecha":1199142000000, "FK_TipoDato":1, "FK_Periodo":26, "Anyo":2008, "Valor":16038.0, "Secreto":false}
+,
+{"Fecha":1214863200000, "FK_TipoDato":1, "FK_Periodo":27, "Anyo":2008, "Valor":15663.0, "Secreto":false}
+,
+{"Fecha":1230764400000, "FK_TipoDato":1, "FK_Periodo":26, "Anyo":2009, "Valor":12271.0, "Secreto":false}
+,
+{"Fecha":1246399200000, "FK_TipoDato":1, "FK_Periodo":27, "Anyo":2009, "Valor":15324.0, "Secreto":false}
+,
+{"Fecha":1262300400000, "FK_TipoDato":1, "FK_Periodo":26, "Anyo":2010, "Valor":13329.0, "Secreto":false}
+,
+{"Fecha":1277935200000, "FK_TipoDato":1, "FK_Periodo":27, "Anyo":2010, "Valor":17090.0, "Secreto":false}
+,
+{"Fecha":1293836400000, "FK_TipoDato":1, "FK_Periodo":26, "Anyo":2011, "Valor":15735.0, "Secreto":false}
+,
+{"Fecha":1309471200000, "FK_TipoDato":1, "FK_Periodo":27, "Anyo":2011, "Valor":19707.0, "Secreto":false}
+,
+{"Fecha":1325372400000, "FK_TipoDato":1, "FK_Periodo":26, "Anyo":2012, "Valor":14675.0, "Secreto":false}
+,
+{"Fecha":1341093600000, "FK_TipoDato":1, "FK_Periodo":27, "Anyo":2012, "Valor":16890.0, "Secreto":false}
+,
+{"Fecha":1356994800000, "FK_TipoDato":1, "FK_Periodo":26, "Anyo":2013, "Valor":14255.0, "Secreto":false}
+,
+{"Fecha":1372629600000, "FK_TipoDato":1, "FK_Periodo":27, "Anyo":2013, "Valor":18166.0, "Secreto":false}
+,
+{"Fecha":1388530800000, "FK_TipoDato":1, "FK_Periodo":26, "Anyo":2014, "Valor":17299.0, "Secreto":false}
+,
+{"Fecha":1404165600000, "FK_TipoDato":1, "FK_Periodo":27, "Anyo":2014, "Valor":23669.0, "Secreto":false}
+,
+{"Fecha":1420066800000, "FK_TipoDato":1, "FK_Periodo":26, "Anyo":2015, "Valor":22396.0, "Secreto":false}
+,
+{"Fecha":1435701600000, "FK_TipoDato":1, "FK_Periodo":27, "Anyo":2015, "Valor":29713.0, "Secreto":false}
+,
+{"Fecha":1451602800000, "FK_TipoDato":1, "FK_Periodo":26, "Anyo":2016, "Valor":27631.0, "Secreto":false}
+,
+{"Fecha":1467324000000, "FK_TipoDato":1, "FK_Periodo":27, "Anyo":2016, "Valor":34942.0, "Secreto":false}
+,
+{"Fecha":1483225200000, "FK_TipoDato":1, "FK_Periodo":26, "Anyo":2017, "Valor":33275.0, "Secreto":false}
+,
+{"Fecha":1498860000000, "FK_TipoDato":1, "FK_Periodo":27, "Anyo":2017, "Valor":44907.0, "Secreto":false}
+,
+{"Fecha":1514761200000, "FK_TipoDato":2, "FK_Periodo":26, "Anyo":2018, "Valor":39166.0, "Secreto":false}
+]
+}
+
