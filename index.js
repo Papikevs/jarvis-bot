@@ -34,8 +34,9 @@ async function guardarDocumento(empresa, nombre, contenido) {
 
 async function obtenerHistorialDB(empresa) {
   try {
-    const { data } = await supabase.from('conversaciones').select('*').eq('empresa', empresa).order('fecha', { ascending: false }).limit(10);
-    return data || [];
+    const { data } = await supabase.from('conversaciones').select('rol, contenido').eq('empresa', empresa).order('fecha', { ascending: false }).limit(10);
+    if (!data || data.length === 0) return [];
+    return data.reverse().map(x => ({ role: 'assistant', content: x.contenido }));
   } catch (e) { return []; }
 }
 
@@ -45,9 +46,17 @@ async function preguntar(sistema, historial, mensaje) {
     const r = await groq.chat.completions.create({ messages: msgs, model: 'llama-3.3-70b-versatile', max_tokens: 2048 });
     return r.choices[0].message.content;
   } catch (e) {
-    console.error('ERROR:', e.message);
+    console.error('ERROR GROQ:', e.message);
     return 'Error al procesar. Intenta de nuevo.';
   }
+}
+
+async function activarEmpresa(ctx, emp, mensaje) {
+  const e = getE(ctx.chat.id);
+  e.emp = emp;
+  const hist = await obtenerHistorialDB(emp);
+  e.hist = hist;
+  await ctx.reply(mensaje);
 }
 
 const teclado = { reply_markup: { keyboard: [['Jarvis', 'Resumen'], ['Santa Fe', 'Eurobuilding'], ['VPT', 'Agencia 58'], ['Cambionet', 'Inicio']], resize_keyboard: true } };
@@ -59,28 +68,36 @@ bot.start(async (ctx) => {
 });
 
 bot.on('text', async (ctx) => {
-  const t = ctx.message.text; const e = getE(ctx.chat.id);
+  const t = ctx.message.text;
+  const e = getE(ctx.chat.id);
+
   if (t === 'Inicio') { e.emp = null; e.hist = []; return ctx.reply('Con quien quieres hablar?', teclado); }
   if (t === 'Jarvis') { e.emp = 'jarvis'; e.hist = []; return ctx.reply('Jarvis activado. A su servicio, Kevin.'); }
+
   if (t === 'Resumen') {
     e.emp = 'jarvis';
     await ctx.reply('Generando resumen del holding...');
     const r = await preguntar(JARVIS, [], 'Dame un resumen ejecutivo del estado actual de las 5 empresas. Destaca lo urgente primero.');
     e.hist = [{ role: 'user', content: 'Resumen' }, { role: 'assistant', content: r }];
-    await guardarConversacion('holding', 'jarvis', `Resumen: ${r}`);
+    await guardarConversacion('holding', 'jarvis', r);
     return ctx.reply(r);
   }
-if (t === 'Santa Fe') { e.emp = 'santafe'; e.hist = []; return ctx.reply('CEO Capital Sports Santa Fe en linea.\n\nPuedes enviarme los archivos del dia o consultarme sobre administracion, personal, compras o finanzas.'); }
-if (t === 'Eurobuilding') { e.emp = 'eurobuilding'; e.hist = []; return ctx.reply('CEO Capital Sports Eurobuilding en linea.\n\nPuedes enviarme los archivos del dia o consultarme sobre administracion.'); }
-if (t === 'VPT') { e.emp = 'vpt'; e.hist = []; return ctx.reply('CEO Venezuela Padel Tour en linea.\n\nEn que le puedo ayudar?'); }
-if (t === 'Agencia 58') { e.emp = 'agencia58'; e.hist = []; return ctx.reply('CEO Agencia 58 en linea.\n\nPuedo cotizar viajes, generar ideas de contenido o ayudarle con la estrategia de crecimiento.'); }
-if (t === 'Cambionet') { e.emp = 'cambionet'; e.hist = []; return ctx.reply('CEO Cambionet en linea.\n\nEn que le puedo ayudar con las finanzas?'); }
+
+  if (t === 'Santa Fe') return activarEmpresa(ctx, 'santafe', 'CEO Capital Sports Santa Fe en linea.\n\nTengo acceso al historial. Puedes enviarme los archivos del dia o consultarme sobre administracion, personal, compras o finanzas.');
+  if (t === 'Eurobuilding') return activarEmpresa(ctx, 'eurobuilding', 'CEO Capital Sports Eurobuilding en linea.\n\nTengo acceso al historial. Puedes enviarme archivos o consultarme sobre administracion.');
+  if (t === 'VPT') return activarEmpresa(ctx, 'vpt', 'CEO Venezuela Padel Tour en linea.\n\nEn que le puedo ayudar?');
+  if (t === 'Agencia 58') return activarEmpresa(ctx, 'agencia58', 'CEO Agencia 58 en linea.\n\nPuedo cotizar viajes, generar contenido o ayudarle con la estrategia de crecimiento.');
+  if (t === 'Cambionet') return activarEmpresa(ctx, 'cambionet', 'CEO Cambionet en linea.\n\nEn que le puedo ayudar con las finanzas?');
+
+  if (!e.emp) return ctx.reply('Con quien quieres hablar?', teclado);
+
   await ctx.sendChatAction('typing');
   const sys = e.emp === 'jarvis' ? JARVIS : EMPRESAS[e.emp];
   const r = await preguntar(sys, e.hist, t);
-  e.hist.push({ role: 'user', content: t }); e.hist.push({ role: 'assistant', content: r });
+  e.hist.push({ role: 'user', content: t });
+  e.hist.push({ role: 'assistant', content: r });
   if (e.hist.length > 20) e.hist = e.hist.slice(-20);
-  await guardarConversacion(e.emp, 'chat', `Usuario: ${t} | Jarvis: ${r}`);
+  await guardarConversacion(e.emp, 'chat', `Usuario: ${t} | Respuesta: ${r}`);
   await ctx.reply(r);
 });
 
@@ -88,10 +105,11 @@ bot.on('photo', async (ctx) => {
   const e = getE(ctx.chat.id);
   const caption = ctx.message.caption || 'Analiza esta imagen';
   await ctx.sendChatAction('typing');
-  const sys = e.emp === 'jarvis' || !e.emp ? JARVIS : EMPRESAS[e.emp];
   const empresa = e.emp || 'jarvis';
+  const sys = empresa === 'jarvis' ? JARVIS : EMPRESAS[empresa];
   const r = await preguntar(sys, e.hist, `Kevin envio una imagen con mensaje: "${caption}". Analiza y responde.`);
-  e.hist.push({ role: 'user', content: caption }); e.hist.push({ role: 'assistant', content: r });
+  e.hist.push({ role: 'user', content: caption });
+  e.hist.push({ role: 'assistant', content: r });
   await guardarDocumento(empresa, 'imagen', caption);
   await ctx.reply(r);
 });
@@ -101,10 +119,11 @@ bot.on('document', async (ctx) => {
   const caption = ctx.message.caption || 'Analiza este documento';
   const nombre = ctx.message.document.file_name || 'documento';
   await ctx.sendChatAction('typing');
-  const sys = e.emp === 'jarvis' || !e.emp ? JARVIS : EMPRESAS[e.emp];
   const empresa = e.emp || 'jarvis';
-  const r = await preguntar(sys, e.hist, `Kevin envio el archivo "${nombre}" con mensaje: "${caption}". Confirma recibo, extrae datos clave del nombre y mensaje, y pregunta que necesita analizar.`);
-  e.hist.push({ role: 'user', content: `Archivo: ${nombre}` }); e.hist.push({ role: 'assistant', content: r });
+  const sys = empresa === 'jarvis' ? JARVIS : EMPRESAS[empresa];
+  const r = await preguntar(sys, e.hist, `Kevin envio el archivo "${nombre}" con mensaje: "${caption}". Confirma recibo y pregunta que necesita analizar.`);
+  e.hist.push({ role: 'user', content: `Archivo: ${nombre}` });
+  e.hist.push({ role: 'assistant', content: r });
   await guardarDocumento(empresa, nombre, caption);
   await ctx.reply(r);
 });
