@@ -33,10 +33,24 @@ async function guardarDocumento(empresa, nombre, contenido) {
 
 async function obtenerContexto(empresa) {
   try {
-    const { data } = await supabase.from('conversaciones').select('contenido').eq('empresa', empresa).order('fecha', { ascending: false }).limit(20);
-    if (!data || data.length === 0) return '';
-    const resumen = data.reverse().map(x => x.contenido).join('\n');
-    return `\n\nHISTORIAL PREVIO CON KEVIN:\n${resumen}`;
+    const { data: docs } = await supabase.from('documentos').select('nombre, contenido').eq('empresa', empresa).order('fecha', { ascending: false }).limit(5);
+    const { data: historial } = await supabase.from('conversaciones').select('contenido').eq('empresa', empresa).order('fecha', { ascending: false }).limit(15);
+
+    let contexto = '';
+
+    if (docs && docs.length > 0) {
+      contexto += '\n\nDOCUMENTOS CARGADOS POR KEVIN:\n';
+      docs.forEach(d => {
+        contexto += `\nArchivo: ${d.nombre}\n${d.contenido}\n`;
+      });
+    }
+
+    if (historial && historial.length > 0) {
+      contexto += '\n\nHISTORIAL PREVIO:\n';
+      contexto += historial.reverse().map(x => x.contenido).join('\n');
+    }
+
+    return contexto;
   } catch (e) { return ''; }
 }
 
@@ -71,7 +85,7 @@ async function procesarArchivo(buffer, nombre) {
     const ext = nombre.split('.').pop().toLowerCase();
     if (ext === 'pdf') {
       const data = await pdfParse(buffer);
-      return data.text.slice(0, 3000);
+      return data.text.slice(0, 4000);
     } else if (ext === 'xlsx' || ext === 'xls') {
       const workbook = XLSX.read(buffer, { type: 'buffer' });
       let texto = '';
@@ -79,10 +93,9 @@ async function procesarArchivo(buffer, nombre) {
         const ws = workbook.Sheets[sheet];
         texto += `Hoja: ${sheet}\n${XLSX.utils.sheet_to_csv(ws)}\n\n`;
       });
-      return texto.slice(0, 3000);
-    } else {
-      return null;
+      return texto.slice(0, 4000);
     }
+    return null;
   } catch (e) {
     console.error('Error procesando archivo:', e.message);
     return null;
@@ -109,8 +122,8 @@ bot.on('text', async (ctx) => {
     await guardarConversacion('holding', 'jarvis', r);
     return ctx.reply(r);
   }
-  if (t === 'Santa Fe') return activarEmpresa(ctx, 'santafe', 'CEO Capital Sports Santa Fe en linea.\n\nPuedes enviarme los archivos del dia (PDF o Excel) o consultarme sobre administracion, personal, compras o finanzas.');
-  if (t === 'Eurobuilding') return activarEmpresa(ctx, 'eurobuilding', 'CEO Capital Sports Eurobuilding en linea.\n\nPuedes enviarme archivos del dia o consultarme sobre administracion.');
+  if (t === 'Santa Fe') return activarEmpresa(ctx, 'santafe', 'CEO Capital Sports Santa Fe en linea.\n\nTengo acceso a documentos e historial previo. Puedes enviarme archivos o consultarme sobre administracion, personal, compras o finanzas.');
+  if (t === 'Eurobuilding') return activarEmpresa(ctx, 'eurobuilding', 'CEO Capital Sports Eurobuilding en linea.\n\nTengo acceso a documentos e historial previo. Puedes enviarme archivos o consultarme.');
   if (t === 'VPT') return activarEmpresa(ctx, 'vpt', 'CEO Venezuela Padel Tour en linea.\n\nEn que le puedo ayudar?');
   if (t === 'Agencia 58') return activarEmpresa(ctx, 'agencia58', 'CEO Agencia 58 en linea.\n\nPuedo cotizar viajes, generar contenido o ayudarle con la estrategia.');
   if (t === 'Cambionet') return activarEmpresa(ctx, 'cambionet', 'CEO Cambionet en linea.\n\nEn que le puedo ayudar con las finanzas?');
@@ -143,21 +156,18 @@ bot.on('document', async (ctx) => {
   await ctx.sendChatAction('typing');
   const empresa = e.emp || 'jarvis';
   const sys = empresa === 'jarvis' ? JARVIS : (e.contexto || EMPRESAS[empresa]);
-  
   try {
-    await ctx.reply(`Recibiendo y procesando ${nombre}...`);
+    await ctx.reply(`Procesando ${nombre}...`);
     const buffer = await descargarArchivo(ctx, ctx.message.document.file_id);
     const contenido = await procesarArchivo(buffer, nombre);
-    
     if (contenido) {
-      const prompt = `Kevin envio el archivo "${nombre}"${caption ? ` con mensaje: "${caption}"` : ''}.\n\nCONTENIDO DEL ARCHIVO:\n${contenido}\n\nAnaliza este contenido en detalle y da un reporte completo con hallazgos, alertas y recomendaciones concretas.`;
+      const prompt = `Kevin envio el archivo "${nombre}"${caption ? ` con mensaje: "${caption}"` : ''}.\n\nCONTENIDO:\n${contenido}\n\nAnaliza en detalle y da reporte completo con hallazgos, alertas y recomendaciones concretas.`;
       const r = await preguntar(sys, e.hist, prompt);
       e.hist.push({ role: 'user', content: `Archivo: ${nombre}` }); e.hist.push({ role: 'assistant', content: r });
-      await guardarDocumento(empresa, nombre, contenido.slice(0, 500));
+      await guardarDocumento(empresa, nombre, contenido);
       await ctx.reply(r);
     } else {
-      const r = await preguntar(sys, e.hist, `Kevin envio el archivo "${nombre}"${caption ? ` con mensaje: "${caption}"` : ''}. El archivo no es PDF ni Excel. Indica que tipos de archivo puedes procesar.`);
-      await ctx.reply(r);
+      await ctx.reply(`El archivo "${nombre}" no es PDF ni Excel. Por favor envia archivos en formato PDF, XLS o XLSX.`);
     }
   } catch (err) {
     console.error('Error procesando documento:', err.message);
